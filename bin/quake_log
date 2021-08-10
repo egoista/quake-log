@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 require 'pry'
+require "readline"
+require "json"
+require 'tty-pager'
 
 @games = []
 
@@ -91,6 +94,39 @@ File.foreach("qgames.log") do |line|
   parse_line(line)
 end
 
-pp @games.map.with_index{ |game, index| { "game_#{index+1}" => format_kill_data(game) } }
-pp @games.map.with_index{ |game, index| { "game_#{index+1}" => calculate_ranking(game) } }
-pp @games.map.with_index{ |game, index| { "game_#{index+1}" => { "kills_by_means" => calculate_kills_by_death_cause(game) } } }
+def init
+  print_greetings
+  print_report_options
+  start_main_loop
+end
+
+def print_greetings
+  puts 'Hi, this program parse the quake log and give you 3 reports'
+end
+
+def print_report_options
+  puts "Press 1 for player's kill report"
+  puts "Press 2 for player's kill report"
+  puts "Press 3 for player's kill report"
+  puts 'Press q for exit'
+end
+
+def start_main_loop
+  pager = TTY::Pager.new
+  prompt = "> "
+  while buf = Readline.readline(prompt, true)
+    case buf
+    when '1'
+      pager.page(JSON.pretty_generate( @games.map.with_index{ |game, index| { "game_#{index+1}" => format_kill_data(game) } } ))
+    when '2'
+      pager.page(JSON.pretty_generate(@games.map.with_index{ |game, index| { "game_#{index+1}" => calculate_ranking(game) } }))
+    when '3'
+      pager.page(JSON.pretty_generate(@games.map.with_index{ |game, index| { "game_#{index+1}" => { "kills_by_means" => calculate_kills_by_death_cause(game) } } }))
+    when 'q'
+      break
+    end
+    prompt = "Choose other report or q for quit >"
+  end
+end
+
+init
