@@ -16,50 +16,24 @@ module QuakeLog
       def parse_line(line)
         case line
         when /InitGame/
-          @@games << {
-            players: [],
-            kills: []
-          }
+          Entity::Game.new
         when /ClientConnect/
           id = line.match(/ClientConnect: (?<id>\d*)/)['id']
-          unless @@games.last[:players].find { |player| player[:id] == id }
-            @@games.last[:players] << {
-              id: id
-            }
-          end
+          Entity::Game.last.create_player(id) unless Entity::Game.last.find_player(id)
         when /ClientUserinfoChanged/
           id, name = line.match(/ClientUserinfoChanged: (\d*) n\\(.*)\\t\\/).captures
-          player = @@games.last[:players].find { |player| player[:id] == id }
-          player[:name] = name
+          player = Entity::Game.last.find_player(id)
+          player.name = name
         when /Kill/
           killer_id, killed_id, mean_id = line.match(/Kill: (\d*) (\d*) (\d*)/).captures
-          @@games.last[:kills] << {
-            killed_id: killed_id,
-            killer_id: killer_id,
-            mean_of_death: MEANS_OF_DEATH[mean_id.to_i]
-          }
+          Entity::Game.last.create_kill(killer_id, killed_id, mean_id)
         end
       end
 
       def calculate_score(game)
-        score = {}
-        game[:players].each { |player| score[player[:id]] = 0 }
+        game.calculate_score
 
-        game[:kills].each do |kill|
-          case kill[:killer_id]
-          when '1022'
-            score[kill[:killed_id]] -= 1
-          when kill[:killed_id]
-            score[kill[:killed_id]] -= 1
-          else
-            score[kill[:killer_id]] += 1
-          end
-        end
-
-        score.transform_keys do |id|
-          player = game[:players].find { |player| player[:id] == id }
-          player[:name]
-        end
+        game.players.map { |player| { player.name => player.score } }
       end
 
       def calculate_ranking(game)
@@ -84,8 +58,8 @@ module QuakeLog
 
       def format_kill_data(game)
         {
-          'total_kills' => game[:kills].size,
-          'players' => game[:players].map { |player| player[:name] },
+          'total_kills' => game.kills.size,
+          'players' => game.players.map(&:name),
           'kills' => calculate_score(game)
         }
       end
@@ -102,7 +76,9 @@ module QuakeLog
       end
 
       def player_kill_report
-        JSON.pretty_generate(@@games.map.with_index { |game, index| { "game_#{index + 1}" => format_kill_data(game) } })
+        JSON.pretty_generate(Entity::Game.all.map.with_index do |game, index|
+                               { "game_#{index + 1}" => format_kill_data(game) }
+                             end)
       end
 
       def player_ranking_report

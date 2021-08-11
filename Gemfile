@@ -5,6 +5,7 @@ ruby File.read('.ruby-version').strip
 
 git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
+gem 'pry'
 gem 'rubocop'
 gem 'tty-pager'
 gem 'tty-progressbar'
