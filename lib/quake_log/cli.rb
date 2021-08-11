@@ -51,12 +51,16 @@ module QuakeLog
     def handle_loop_choice(choice)
       case choice
       when 0
-        print_report(QuakeLog::Main.player_kill_report)
+        print_report(all_games_report(QuakeLog::Report::PlayerKill))
       when 1
-        print_report(QuakeLog::Main.player_ranking_report)
+        print_report(all_games_report(QuakeLog::Report::PlayerRanking))
       when 2
-        print_report(QuakeLog::Main.weapon_kill_report)
+        print_report(all_games_report(QuakeLog::Report::WeaponKill))
       end
+    end
+
+    def all_games_report(report_klass)
+      Entity::Game.all.map{|game| report_klass.build(game) }
     end
 
     def prompt

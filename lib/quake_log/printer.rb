@@ -19,10 +19,15 @@ module QuakeLog
     end
 
     def print_report(report)
-      pager.page(report)
+      json = generate_pretty_json(report)
+      pager.page(json)
     end
 
     private
+
+    def generate_pretty_json(report)
+      JSON.pretty_generate(report)
+    end
 
     def pager
       @pager ||= TTY::Pager.new

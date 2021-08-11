@@ -22,6 +22,7 @@ module QuakeLog
       def initialize
         @players = []
         @kills = []
+        @name = "game_#{@@games.size + 1}"
         @@games << self
       end
 
