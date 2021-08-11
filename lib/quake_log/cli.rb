@@ -12,7 +12,7 @@ module QuakeLog
 
     def init
       print_greetings
-      print_parse_log_bar
+      parse_log
       clear_previous_line
       start_main_loop
     end
@@ -28,6 +28,16 @@ module QuakeLog
     end
 
     private
+
+    def parse_log
+      total = QuakeLog::LogParser.total_lines(file_path)
+      start_log_bar(total)
+      QuakeLog::LogParser.parse_file(file_path) { advance_log_bar }
+    end
+
+    def file_path
+      File.join(__dir__, '..', '..', 'data', 'qgames.log')
+    end
 
     def choices
       {

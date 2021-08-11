@@ -2,34 +2,7 @@
 
 module QuakeLog
   class Main
-    @@games = []
-
-    MEANS_OF_DEATH = %w[
-      MOD_UNKNOWN MOD_SHOTGUN MOD_GAUNTLET MOD_MACHINEGUN MOD_GRENADE
-      MOD_GRENADE_SPLASH MOD_ROCKET MOD_ROCKET_SPLASH MOD_PLASMA MOD_PLASMA_SPLASH
-      MOD_RAILGUN MOD_LIGHTNING MOD_BFG MOD_BFG_SPLASH MOD_WATER MOD_SLIME MOD_LAVA
-      MOD_CRUSH MOD_TELEFRAG MOD_FALLING MOD_SUICIDE MOD_TARGET_LASER MOD_TRIGGER_HURT
-      MOD_NAIL MOD_CHAINGUN MOD_PROXIMITY_MINE MOD_KAMIKAZE MOD_JUICED MOD_GRAPPLE
-    ].freeze
-
     class << self
-      def parse_line(line)
-        case line
-        when /InitGame/
-          Entity::Game.new
-        when /ClientConnect/
-          id = line.match(/ClientConnect: (?<id>\d*)/)['id']
-          Entity::Game.last.create_player(id) unless Entity::Game.last.find_player(id)
-        when /ClientUserinfoChanged/
-          id, name = line.match(/ClientUserinfoChanged: (\d*) n\\(.*)\\t\\/).captures
-          player = Entity::Game.last.find_player(id)
-          player.name = name
-        when /Kill/
-          killer_id, killed_id, mean_id = line.match(/Kill: (\d*) (\d*) (\d*)/).captures
-          Entity::Game.last.create_kill(killer_id, killed_id, mean_id)
-        end
-      end
-
       def calculate_score(game)
         game.calculate_score
 
@@ -62,17 +35,6 @@ module QuakeLog
           'players' => game.players.map(&:name),
           'kills' => calculate_score(game)
         }
-      end
-
-      def parse_file(filename)
-        File.foreach(filename) do |line|
-          parse_line(line)
-          yield if block_given?
-        end
-      end
-
-      def total_lines(filename)
-        `wc -l < #{filename}`.to_i
       end
 
       def player_kill_report

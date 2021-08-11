@@ -6,11 +6,12 @@ module QuakeLog
       puts 'Hi, this program parse the quake log and give you 3 reports'
     end
 
-    def print_parse_log_bar
-      filename = 'data/qgames.log'
-      total = QuakeLog::Main.total_lines(filename)
-      bar = TTY::ProgressBar.new('Parsing Log [:bar]', bar_format: :block, total: total)
-      QuakeLog::Main.parse_file(filename) { bar.advance }
+    def start_log_bar(total)
+      @bar = TTY::ProgressBar.new('Parsing Log [:bar]', bar_format: :block, total: total)
+    end
+
+    def advance_log_bar
+      @bar.advance
     end
 
     def clear_previous_line
